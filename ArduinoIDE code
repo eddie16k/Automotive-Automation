@@ -1,0 +1,112 @@
+#include <Servo.h>
+const int pinled = 6; //Pin-ul Arduino la care este conectat LED-ul
+const int LIGHT_SENSOR_PIN = A0; // Pin-ul Arduino la care este conectat la senzorul de lumina
+const int LED_PIN          = 10;  // Pin-ul Arduino la care este conectat  LED-ul
+const int ANALOG_THRESHOLD = 1000;
+const int HUMIDITY_SENSOR_PIN=A1;//Pin-ul Arduino la care este conectat senzorul de umiditate
+int angle = 0;
+int buzzer=9;//Pin-ul arduino la care buzzerul este conectat
+#define echoPin 3 // ataseaza Pin-ul D2 Arduino la Pin-ul Echo al senzorului HC-SR04
+#define trigPin 4 //ataseaza Pin-ul D3 Arduino la Pin-ul Trig al senzorului HC-SR04
+
+
+int analogValue;
+Servo myservo;
+long duration; // durata miscarii undei sonore
+int distance; // variabila utilizata pentru masurarea distantei cu ajutorul senzorului ultrasonic
+int sound=0;//variabila ce determina sunetul dat de buzzerul pasiv
+
+void flash(){
+  digitalWrite(pinled,HIGH);
+  digitalWrite(LED_PIN, HIGH);
+  delay(1000);
+  digitalWrite(pinled,HIGH);
+  digitalWrite(LED_PIN, HIGH);
+  delay(2000);
+  digitalWrite(pinled,LOW);
+  digitalWrite(LED_PIN, LOW);
+}
+void setup() {
+  pinMode(6,OUTPUT); //seteaza pinul Arduino pentru modul Output
+  pinMode(10, OUTPUT); // seteaza pinul Arduino pe modul Output
+  // initializeaza comunicarea seriala la 9600 biti pe secunda:
+  Serial.begin(9600);
+  myservo.attach(2);
+   pinMode (buzzer, OUTPUT) ;
+   //functiile necesare pentru senzorul de proximitate
+   pinMode(trigPin, OUTPUT); // Seteaza TrigPin-ul ca un Output
+   pinMode(echoPin, INPUT); // Seteaza echoPinu-ul ca un Input 
+  Serial.println("Ultrasonic Sensor HC-SR04 Test"); // printeaza text in Serial Monitor
+  Serial.println("with Arduino Nano V3");
+  flash();//functia de test definita anterior
+}
+
+void loop() {
+  analogValue = analogRead(LIGHT_SENSOR_PIN); // citirea valorii senzorului de lumina
+   int sensorValue = analogRead(HUMIDITY_SENSOR_PIN);//citirea valorii senzorului de ploaie
+   myservo.write(0);//setarea pozitiei de 0 grade a servo-ului
+   Serial.println(sensorValue);
+   delay(10);
+  //instructiunile pentru senzorul de proximitate
+   digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Seteaza  trigPin HIGH (ACTIVE) pentru 10 microsecunde
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Citeste valoarea echoPin, returneaza durata undei sonore in microsecunde
+  duration = pulseIn(echoPin, HIGH);
+  // Calculeaza distanta
+  distance = duration * 0.034 / 2; // Viteza undei sonore impartita la 2(dus-intors catre obiect)
+  // Afseaza distanta pe Serial Monitor
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+ //instructiunile pentru miscare servo-ului
+  while(sensorValue < 500){
+    sensorValue = analogRead(HUMIDITY_SENSOR_PIN);
+    if (sensorValue > 500)
+    break;
+    myservo.write(90);
+  delay(500);
+   myservo.write(0);
+  delay(500);}
+ //Instructiunile de functionare pentru Buzzerul pasiv cu datele obtinute de la senzorul ultrasonic
+
+   
+    
+    if(distance<=20&&distance>15){
+    sound=600;
+  }  
+   
+     
+    if(distance<=15&&distance>10){
+    sound=100;
+  }
+   
+   if(distance<=10&&distance>5){
+    sound=1400;
+  } 
+  
+   if(distance<=5){
+    sound=2000; 
+  }
+  if(distance>20||distance<=0){
+          noTone(buzzer);
+         
+        }else{
+          tone(buzzer, sound);
+         
+        }
+  delay(100);
+  
+ //instructiunile pentru aprinderea si stingerea LED-ului
+
+  if(analogValue > ANALOG_THRESHOLD){
+    digitalWrite(pinled,HIGH); //Aprindere LED 2
+    digitalWrite(LED_PIN, HIGH); // aprindere LED 
+  }else{
+    digitalWrite(LED_PIN, LOW);  // stingere LED
+    digitalWrite(pinled,LOW); //Stingere LED
+  }
+ }
